@@ -1,0 +1,6 @@
+<resources>
+    <color name="background">#FFFFFF</color> <!-- White -->
+    <color name="textPrimary">#000000</color> <!-- Black -->
+    <color name="buttonBackground">#FFFFFF</color> <!-- White -->
+    <color name="buttonText">#388E3C</color> <!-- Green -->
+</resources>
