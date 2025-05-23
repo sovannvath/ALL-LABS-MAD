@@ -1,8 +1,10 @@
 package com.example.mad_ouksovannvath_alllabs;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -25,6 +27,12 @@ public class MainActivity extends AppCompatActivity {
     private Button submitButton;
     private BottomNavigationView bottomNavigationView;
 
+    private Button loginButton, signupButton, signOutButton;
+
+    private SharedPreferences sharedPreferences;
+    private static final String PREFS_NAME = "MyPrefs";
+    private static final String KEY_LOGGED_IN = "isLoggedIn";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,6 +47,9 @@ public class MainActivity extends AppCompatActivity {
 
         Log.d("DebugLab", "App started successfully!");
 
+        // Initialize SharedPreferences
+        sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+
         // Initialize views
         amountEditText = findViewById(R.id.amountEditText);
         remarkEditText = findViewById(R.id.remarkEditText);
@@ -46,18 +57,41 @@ public class MainActivity extends AppCompatActivity {
         categorySpinner = findViewById(R.id.categorySpinner);
         submitButton = findViewById(R.id.submitButton);
         bottomNavigationView = findViewById(R.id.bottomNavigationView);
+        loginButton = findViewById(R.id.loginButton);
+        signupButton = findViewById(R.id.signupButton);
+        signOutButton = findViewById(R.id.signOutButton);  // Make sure you add this button in your layout!
 
-        // Setup spinner categories
+        // Check login state
+        boolean isLoggedIn = sharedPreferences.getBoolean(KEY_LOGGED_IN, false);
+        updateUIForLoginState(isLoggedIn);
+
+        // Login button click
+        loginButton.setOnClickListener(v -> {
+            // Start login activity
+            Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+            startActivity(intent);
+        });
+
+        // Signup button click
+        signupButton.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, SignUpActivity.class);
+            startActivity(intent);
+        });
+
+        // Sign out button click
+        signOutButton.setOnClickListener(v -> {
+            // Clear login flag
+            sharedPreferences.edit().putBoolean(KEY_LOGGED_IN, false).apply();
+            updateUIForLoginState(false);
+        });
+
+        // Spinner setup
         String[] categories = {"Food", "Transport", "Shopping", "Bills", "Entertainment"};
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                this,
-                android.R.layout.simple_spinner_item,
-                categories
-        );
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, categories);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         categorySpinner.setAdapter(adapter);
 
-        // Submit button action
+        // Submit button listener
         submitButton.setOnClickListener(v -> {
             String amountStr = amountEditText.getText().toString().trim();
             double amount = 0;
@@ -88,33 +122,42 @@ public class MainActivity extends AppCompatActivity {
             intent.putExtra("lastRemark", remark);
 
             startActivity(intent);
-            finish();  // finish here is okay, since we leave MainActivity for ResultActivity
+            finish();
         });
 
-        // Bottom navigation item selected listener WITHOUT finish()
+        // Bottom navigation handling
         bottomNavigationView.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
             if (id == R.id.navigation_home) {
-                // Already here
                 return true;
             } else if (id == R.id.navigation_add_expense) {
                 startActivity(new Intent(MainActivity.this, AddExpenseActivity.class));
-                // DO NOT finish() here to keep back stack
                 return true;
             } else if (id == R.id.navigation_expense_list) {
                 startActivity(new Intent(MainActivity.this, ExpenseListActivity.class));
-                // DO NOT finish() here to keep back stack
                 return true;
             }
             return false;
         });
 
-        // Handle system bars inset for padding
+        // Apply padding for system bars
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+    }
+
+    private void updateUIForLoginState(boolean isLoggedIn) {
+        if (isLoggedIn) {
+            loginButton.setVisibility(View.GONE);
+            signupButton.setVisibility(View.GONE);
+            signOutButton.setVisibility(View.VISIBLE);
+        } else {
+            loginButton.setVisibility(View.VISIBLE);
+            signupButton.setVisibility(View.VISIBLE);
+            signOutButton.setVisibility(View.GONE);
+        }
     }
 
     private boolean isDarkModeEnabled() {
